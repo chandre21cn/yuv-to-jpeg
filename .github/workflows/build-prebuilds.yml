@@ -33,21 +33,25 @@ jobs:
         with:
           node-version: 20
 
-      # 仅在 Windows 上设置 MSVC 环境，不限制特定小版本 toolset
+      # 在 Windows 上设置 MSVC 环境，并根据 matrix.arch 指定目标架构 (x64 / arm64)
       - name: Setup MSVC Developer Command Prompt
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
 
       # 禁用生命周期 install 脚本，防止 npm install 自动触发本地编译
       - name: Install Dependencies
         run: npm install --ignore-scripts
 
-      # 构建原生预编译包，指定 --target 20.0.0 避免拉取错误的头文件
+      # 构建原生预编译包，传递目标架构环境变量
       - name: Build Prebuild Binary
         run: npx prebuildify --napi --target 20.0.0 --arch ${{ matrix.arch }} --strip
         env:
           GYP_MSVS_VERSION: '2022'
           npm_config_msvs_version: '2022'
+          npm_config_arch: ${{ matrix.arch }}
+          ARCH: ${{ matrix.arch }}
 
       - name: Upload Prebuild Artifact
         uses: actions/upload-artifact@v4

@@ -58,14 +58,16 @@
             ["target_arch=='x64'", {
               "msvs_settings": {
                 "VCCLCompilerTool": {
-                  "EnableEnhancedInstructionSet": "5" # AVX2
+                  "EnableEnhancedInstructionSet": "5" # AVX2 (仅限 x64)
                 }
               }
             }]
           ],
           "libraries": [
             "<(module_root_dir)/external_deps/libjpeg-turbo/install/lib/turbojpeg-static.lib",
+            "<(module_root_dir)/external_deps/libjpeg-turbo/install/lib/turbojpeg.lib",
             "<(module_root_dir)/external_deps/libyuv/install/lib/yuv.lib",
+            "<(module_root_dir)/external_deps/libyuv/install/lib/libyuv.lib",
             "legacy_stdio_definitions.lib"
           ]
         }],

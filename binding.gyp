@@ -65,9 +65,7 @@
           ],
           "libraries": [
             "<(module_root_dir)/external_deps/libjpeg-turbo/install/lib/turbojpeg-static.lib",
-            "<(module_root_dir)/external_deps/libjpeg-turbo/install/lib/turbojpeg.lib",
             "<(module_root_dir)/external_deps/libyuv/install/lib/yuv.lib",
-            "<(module_root_dir)/external_deps/libyuv/install/lib/libyuv.lib",
             "legacy_stdio_definitions.lib"
           ]
         }],

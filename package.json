@@ -1,7 +1,14 @@
 {
   "name": "yuv_to_jpeg",
   "version": "1.0.0",
+  "description": "Convert YUV to JPEG using libyuv and libjpeg-turbo with N-API",
   "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "prebuilds"
+  ],
   "scripts": {
     "build": "node-gyp rebuild",
     "prebuild": "prebuildify --napi",

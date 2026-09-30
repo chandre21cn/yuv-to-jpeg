@@ -31,7 +31,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # 在 Windows 上设置 MSVC 环境，并根据 matrix.arch 指定目标架构 (x64 / arm64)
       - name: Setup MSVC Developer Command Prompt
@@ -77,9 +77,10 @@ jobs:
       - name: Organize prebuilds
         run: |
           mkdir -p prebuilds
-          # 将下载下来的各个平台产物递归复制到 prebuilds 目录
-          find temp-artifacts -type f -name "*.node" -exec cp {} prebuilds/ \;
+          # 递归将各平台 artifact 的子目录合并，防止文件名重名覆盖
+          cp -R temp-artifacts/*/* prebuilds/ 2>/dev/null || cp -R temp-artifacts/* prebuilds/
           rm -rf temp-artifacts
+          echo "=== Final prebuilds directory structure ==="
           ls -R prebuilds
 
       - name: Commit and push prebuilds

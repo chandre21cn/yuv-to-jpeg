@@ -5,3 +5,4 @@
 !build/
 !build/Release/
 !build/Release/yuv_to_jpeg.node
+!prebuilds/*

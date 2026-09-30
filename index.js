@@ -1,5 +1,4 @@
 const path = require('path');
-const fs = require('fs');
 const load = require('node-gyp-build');
 
 // 缓存加载后的原生模块（单例）
@@ -54,12 +53,8 @@ async function processFrame(nv12Buffer, width, height, options = {}) {
     const result = await nativeAddon.processFrame(nv12Buffer, width, height, opts);
 
     if (opts.asBlob) {
-        const uint8Array = new Uint8Array(
-            result.jpegBuffer.buffer,
-            result.jpegBuffer.byteOffset,
-            result.jpegBuffer.byteLength
-        );
-        result.jpegBlob = new Blob([ uint8Array ], { type: 'image/jpeg' });
+        // Node.js Buffer 是 Uint8Array 的子类，可直接转为 Blob
+        result.jpegBlob = new Blob([result.jpegBuffer], { type: 'image/jpeg' });
     }
 
     return result;

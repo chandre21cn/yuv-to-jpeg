@@ -51,7 +51,11 @@
             },
             "VCLinkerTool": {
               "EnableCOMDATFolding": "true",
-              "OptimizeReferences": "true"
+              "OptimizeReferences": "true",
+              "AdditionalOptions": [
+                "/NODEFAULTLIB:MSVCRTD",
+                "/NODEFAULTLIB:LIBCMT"
+              ]
             }
           },
           "conditions": [
@@ -66,7 +70,8 @@
           "libraries": [
             "<(module_root_dir)/external_deps/libjpeg-turbo/install/lib/turbojpeg-static.lib",
             "<(module_root_dir)/external_deps/libyuv/install/lib/yuv.lib",
-            "legacy_stdio_definitions.lib"
+            "legacy_stdio_definitions.lib",
+            "msvcrt.lib"
           ]
         }],
         ["OS!='win'", {

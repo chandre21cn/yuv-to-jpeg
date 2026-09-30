@@ -1,0 +1,12 @@
+# Logs
+logs
+*.log
+
+build
+node_modules
+external_deps
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

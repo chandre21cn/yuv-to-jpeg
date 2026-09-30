@@ -1,0 +1,18 @@
+{
+  "name": "yuv_to_jpeg",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "node-gyp rebuild",
+    "prebuild": "prebuildify --napi",
+    "install": "node-gyp-build"
+  },
+  "dependencies": {
+    "node-gyp-build": "^4.8.1"
+  },
+  "devDependencies": {
+    "node-addon-api": "^8.0.0",
+    "node-gyp": "^10.0.0",
+    "prebuildify": "^6.0.0"
+  }
+}

@@ -1,0 +1,69 @@
+name: Build Native Prebuilds
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-prebuilds:
+    name: Build on ${{ matrix.os }} (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-13
+            arch: x64
+          - os: windows-latest
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Prebuild Binary
+        run: npx prebuildify --napi --strip
+
+      - name: Upload Prebuild Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prebuilds-${{ runner.os }}-${{ matrix.arch }}
+          path: prebuilds/
+
+  commit-prebuilds:
+    name: Commit Prebuilds back to Git
+    needs: build-prebuilds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: temp-artifacts
+
+      - name: Organize prebuilds
+        run: |
+          mkdir -p prebuilds
+          cp -r temp-artifacts/prebuilds-*/* prebuilds/ || true
+          rm -rf temp-artifacts
+          ls -R prebuilds
+
+      - name: Commit and push prebuilds
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(ci): update prebuild binaries [skip ci]"
+          file_pattern: "prebuilds/*"

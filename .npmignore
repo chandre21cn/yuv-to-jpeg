@@ -1,0 +1,7 @@
+*
+.*
+!index.js
+!index.d.ts
+!build/
+!build/Release/
+!build/Release/yuv_to_jpeg.node

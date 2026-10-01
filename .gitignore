@@ -1,0 +1,13 @@
+# Logs
+logs
+*.log
+
+build
+node_modules
+deps
+prebuilds
+
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

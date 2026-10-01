@@ -38,7 +38,7 @@ jobs:
           architecture: ${{ matrix.node-arch }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'

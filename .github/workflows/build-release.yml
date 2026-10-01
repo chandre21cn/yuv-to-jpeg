@@ -55,8 +55,18 @@ jobs:
       - name: Build libjpeg-turbo
         run: node scripts/build_deps.js
 
+      - name: Verify deps
+        shell: bash
+        run: |
+          echo "=== deps dir ==="
+          ls -la deps/ 2>/dev/null || echo "no deps dir"
+          echo "=== turbojpeg header ==="
+          find deps -name "turbojpeg.h" 2>/dev/null || echo "turbojpeg.h NOT FOUND"
+          echo "=== turbojpeg lib ==="
+          find deps -name "libturbojpeg*" -o -name "turbojpeg*.lib" 2>/dev/null || echo "lib NOT FOUND"
+
       - name: Compile native addon
-        run: node-gyp rebuild --verbose
+        run: node-gyp rebuild
 
       - name: Locate binary (Unix)
         if: runner.os != 'Windows'

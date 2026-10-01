@@ -42,7 +42,7 @@ jobs:
 
       - name: Install build tools (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y nasm cmake
+        run: sudo apt-get update && sudo apt-get install -y nasm cmake build-essential python3
 
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
@@ -52,8 +52,11 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install nasm -y
 
-      - name: Build native binary
-        run: npm run build
+      - name: Build libjpeg-turbo
+        run: node scripts/build_deps.js
+
+      - name: Compile native addon
+        run: node-gyp rebuild --verbose
 
       - name: Locate binary (Unix)
         if: runner.os != 'Windows'

@@ -8,24 +8,30 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}-${{ matrix.arch }}
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: macos-latest
+            platform: darwin
             arch: arm64
             node-arch: arm64
-          - os: macos-13
-            arch: x64
-            node-arch: x64
+            cross-arch: ''
           - os: windows-latest
+            platform: win32
             arch: x64
             node-arch: x64
-          - os: ubuntu-latest
-            arch: x64
+            cross-arch: ''
+          - os: windows-latest
+            platform: win32
+            arch: arm64
             node-arch: x64
+            cross-arch: 'arm64'
+
+    env:
+      npm_config_arch: ${{ matrix.cross-arch }}
 
     steps:
       - name: Checkout
@@ -34,15 +40,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           architecture: ${{ matrix.node-arch }}
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
-
-      - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y nasm cmake build-essential python3
 
       - name: Install build tools (macOS)
         if: runner.os == 'macOS'
@@ -55,6 +57,9 @@ jobs:
       - name: Build native binary
         shell: bash
         run: |
+          if [ -n "$npm_config_arch" ]; then
+            echo "Cross-compiling for $npm_config_arch"
+          fi
           npm run build 2>&1 | tee build_output.log
           if [ ${PIPESTATUS[0]} -ne 0 ]; then
             echo "=== BUILD FAILED ==="
@@ -66,35 +71,21 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log-${{ runner.os }}-${{ matrix.arch }}
+          name: build-log-${{ matrix.platform }}-${{ matrix.arch }}
           path: build_output.log
           if-no-files-found: ignore
 
-      - name: Locate binary (Unix)
-        if: runner.os != 'Windows'
-        run: ls -lh build/Release/*.node
-
-      - name: Locate binary (Windows)
-        if: runner.os == 'Windows'
-        run: dir build\Release\*.node
-
-      - name: Rename binary (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          mkdir -p dist
-          cp build/Release/yuv2jpeg_worker.node dist/yuv_to_jpeg-${{ runner.os == 'macOS' && 'darwin' || runner.os == 'Linux' && 'linux' }}-${{ matrix.arch }}.node
-
-      - name: Rename binary (Windows)
-        if: runner.os == 'Windows'
+      - name: Rename binary
         shell: bash
         run: |
           mkdir -p dist
-          cp build/Release/yuv2jpeg_worker.node dist/yuv_to_jpeg-win32-${{ matrix.arch }}.node
+          cp build/Release/yuv2jpeg_worker.node dist/yuv_to_jpeg-${{ matrix.platform }}-${{ matrix.arch }}.node
+          ls -lh dist/
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yuv_to_jpeg-${{ runner.os == 'macOS' && 'darwin' || runner.os == 'Linux' && 'linux' || 'win32' }}-${{ matrix.arch }}
+          name: yuv_to_jpeg-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/
 
   release:

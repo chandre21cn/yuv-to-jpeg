@@ -49,6 +49,7 @@ const archName = ARCH_MAP[arch];
 if (!osName || !archName) {
     console.warn(
         `[yuv-to-jpeg] Unsupported platform: ${platform}-${arch}.\n` +
+        'Supported: darwin-arm64, win32-x64, win32-arm64\n' +
         'Please build from source: npm run build'
     );
     process.exit(0);

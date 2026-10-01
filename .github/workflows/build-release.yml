@@ -55,25 +55,7 @@ jobs:
         run: choco install nasm -y
 
       - name: Build native binary
-        shell: bash
-        run: |
-          if [ -n "$npm_config_arch" ]; then
-            echo "Cross-compiling for $npm_config_arch"
-          fi
-          npm run build 2>&1 | tee build_output.log
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            echo "=== BUILD FAILED ==="
-            cat build_output.log
-            exit 1
-          fi
-
-      - name: Upload build log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log-${{ matrix.platform }}-${{ matrix.arch }}
-          path: build_output.log
-          if-no-files-found: ignore
+        run: npm run build
 
       - name: Rename binary
         shell: bash

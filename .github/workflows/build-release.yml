@@ -52,21 +52,15 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install nasm -y
 
-      - name: Build libjpeg-turbo
-        run: node scripts/build_deps.js
-
-      - name: Verify deps
+      - name: Build native binary
         shell: bash
         run: |
-          echo "=== deps dir ==="
-          ls -la deps/ 2>/dev/null || echo "no deps dir"
-          echo "=== turbojpeg header ==="
-          find deps -name "turbojpeg.h" 2>/dev/null || echo "turbojpeg.h NOT FOUND"
-          echo "=== turbojpeg lib ==="
-          find deps -name "libturbojpeg*" -o -name "turbojpeg*.lib" 2>/dev/null || echo "lib NOT FOUND"
-
-      - name: Compile native addon
-        run: node-gyp rebuild
+          npm run build 2>&1 | tee build_output.log
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "=== BUILD FAILED ==="
+            tail -80 build_output.log
+            exit 1
+          fi
 
       - name: Locate binary (Unix)
         if: runner.os != 'Windows'

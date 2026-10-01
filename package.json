@@ -4,20 +4,8 @@
   "description": "YUV to JPEG encoder with TurboJPEG, watermark detection and timestamp extraction",
   "main": "index.js",
   "types": "index.d.ts",
-  "files": [
-    "index.js",
-    "index.d.ts",
-    "install.js"
-  ],
   "scripts": {
-    "build": "node scripts/build_deps.js && node-gyp rebuild",
     "postinstall": "node install.js"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "node-addon-api": "^8.0.0",
-    "node-gyp": "^13.0.0",
-    "typescript": "^7.0.2"
   },
   "repository": {
     "type": "git",

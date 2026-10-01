@@ -16,7 +16,7 @@
   "dependencies": {},
   "devDependencies": {
     "node-addon-api": "^8.0.0",
-    "node-gyp": "^10.0.0",
+    "node-gyp": "^13.0.0",
     "typescript": "^7.0.2"
   },
   "repository": {

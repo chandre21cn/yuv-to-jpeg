@@ -15,6 +15,13 @@ export interface PixelBufferOptions {
     yStride?: number;
     /** 缓冲区字节数，通常传 frame.allocationSize()，保证装得下带 stride 填充的整帧 */
     bufferSize?: number;
+    /**
+     * 输入 YUV 的颜色范围。视频解码帧默认为 limited range（纯黑对应 Y=16），
+     * 编码前会自动扩展为 full range，否则纯黑画面在 JPEG 中会发灰。
+     * 若数据源是 Canvas/ImageBitmap 等 full range (0-255) 的 YUV，需设为 true。
+     * 默认 false（limited range）。
+     */
+    fullRange?: boolean;
 }
 
 export interface PixelBufferEncoder {

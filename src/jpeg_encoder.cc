@@ -89,9 +89,12 @@ Napi::Value JpegEncoder::GetEncoder(const Napi::CallbackInfo& info) {
 
     FrameLayout lay;
     int yStride = 0;
+    bool fullRange = false;
     if (!ReadNum(env, o, "width", lay.width) || !ReadNum(env, o, "height", lay.height) ||
-        !ReadNum(env, o, "yStride", yStride) || !ReadNum(env, o, "bufferSize", lay.bufferSize))
+        !ReadNum(env, o, "yStride", yStride) || !ReadNum(env, o, "bufferSize", lay.bufferSize) ||
+        !ReadBool(env, o, "fullRange", fullRange))
         return env.Undefined();
+    lay.fullRange = fullRange;
 
     Napi::Value fv = o.Get("format");
     std::string fmt = fv.IsString() ? fv.As<Napi::String>().Utf8Value() : "";

@@ -1,6 +1,6 @@
 {
   "name": "yuv_to_jpeg",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "YUV to JPEG encoder with TurboJPEG, watermark detection and timestamp extraction",
   "main": "index.js",
   "types": "index.d.ts",

@@ -77,3 +77,83 @@ static inline void SplitUVPlane(const uint8_t* src, int srcStride,
         }
     }
 }
+
+// 将 limited range (Y 16-235 / CbCr 16-240) 原地扩展为 full range (0-255)。
+// TurboJPEG 直接把输入 YCbCr 写入 JPEG（JFIF 语义为 full range），
+// 若视频帧的 limited range 不经扩展就编码，纯黑(Y=16)解码后会显示为深灰。
+//
+// 转换公式（四舍五入）：
+//   Y:  full = clamp((limited - 16) * 255 / 219, 0, 255)
+//   UV: full = clamp((limited - 16) * 255 / 224, 0, 255)
+//
+// 用 Q14 定点乘法实现（scale 需放入 int16，故不用 Q15）：
+//   scale = round(255/div * 16384)，result = (v * scale + 8192) >> 14
+//   Y  scale = 19078  (255/219 ≈ 1.16438)
+//   UV scale = 18656  (255/224 ≈ 1.13839)
+static inline void ExpandRangePlane(uint8_t* plane, int stride, int width, int height, bool isLuma) {
+    const int16_t scale = isLuma ? 19078 : 18656;  // Q14，均 < 32768
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+    const int16x4_t vscale = vdup_n_s16(scale);
+    const int32x4_t vround = vdupq_n_s32(1 << 13);  // 8192，Q14 四舍五入
+    for (int y = 0; y < height; ++y) {
+        uint8_t* row = plane + static_cast<size_t>(y) * stride;
+        int x = 0;
+        for (; x <= width - 8; x += 8) {
+            uint8x8_t in = vld1_u8(row + x);
+            int16x8_t v = vreinterpretq_s16_u16(vmovl_u8(in));
+            v = vsubq_s16(v, vdupq_n_s16(16));
+            // int16 * int16 → int32，避免 Q15 溢出
+            int32x4_t plo = vmull_s16(vget_low_s16(v), vscale);
+            int32x4_t phi = vmull_s16(vget_high_s16(v), vscale);
+            plo = vshrq_n_s32(vaddq_s32(plo, vround), 14);
+            phi = vshrq_n_s32(vaddq_s32(phi, vround), 14);
+            int16x8_t r = vcombine_s16(vqmovn_s32(plo), vqmovn_s32(phi));
+            vst1_u8(row + x, vqmovun_s16(r));  // int16→uint8，钳到 [0,255]
+        }
+        for (; x < width; ++x) {
+            int v = row[x] - 16;
+            int r = (v * scale + 8192) >> 14;
+            row[x] = r < 0 ? 0 : (r > 255 ? 255 : static_cast<uint8_t>(r));
+        }
+    }
+#elif defined(__x86_64__) || defined(_M_X64)
+    static const bool kSSE41 = CpuSupportsSSE41();
+    const __m128i v16 = _mm_set1_epi16(16);
+    const __m128i vscale32 = _mm_set1_epi32(scale);
+    const __m128i vround = _mm_set1_epi32(1 << 13);
+    const __m128i zero = _mm_setzero_si128();
+    for (int y = 0; y < height; ++y) {
+        uint8_t* row = plane + static_cast<size_t>(y) * stride;
+        int x = 0;
+        if (kSSE41) {
+            for (; x <= width - 8; x += 8) {
+                __m128i in = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(row + x));
+                __m128i v = _mm_unpacklo_epi8(in, zero);  // 8 个 int16
+                v = _mm_sub_epi16(v, v16);
+                __m128i vlo = _mm_cvtepi16_epi32(v);                          // 低 4 → int32
+                __m128i vhi = _mm_cvtepi16_epi32(_mm_srli_si128(v, 8));        // 高 4 → int32
+                __m128i slo = _mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(vlo, vscale32), vround), 14);
+                __m128i shi = _mm_srai_epi32(_mm_add_epi32(_mm_mullo_epi32(vhi, vscale32), vround), 14);
+                __m128i r16 = _mm_packs_epi32(slo, shi);                       // int32→int16
+                __m128i out = _mm_packus_epi16(r16, zero);                     // int16→uint8，钳[0,255]
+                _mm_storel_epi64(reinterpret_cast<__m128i*>(row + x), out);
+            }
+        }
+        for (; x < width; ++x) {
+            int v = row[x] - 16;
+            int r = (v * scale + 8192) >> 14;
+            row[x] = r < 0 ? 0 : (r > 255 ? 255 : static_cast<uint8_t>(r));
+        }
+    }
+#else
+    for (int y = 0; y < height; ++y) {
+        uint8_t* row = plane + static_cast<size_t>(y) * stride;
+        for (int x = 0; x < width; ++x) {
+            int v = row[x] - 16;
+            int r = (v * scale + 8192) >> 14;
+            row[x] = r < 0 ? 0 : (r > 255 ? 255 : static_cast<uint8_t>(r));
+        }
+    }
+#endif
+}

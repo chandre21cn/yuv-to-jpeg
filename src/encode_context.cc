@@ -56,7 +56,16 @@ bool EncodeContext::Encode(uint8_t* base, size_t len, const FrameLayout& lay, in
         RemoveWatermarkPlanar(yP, stride, uP, uS, vP, vS, w, h, unit, wm.vertical, opts_.bitSize);
     }
 
-    // 4. JPEG 压缩
+    // 4. 颜色范围扩展：视频帧通常是 limited range (Y 16-235 / CbCr 16-240)，
+    //    而 JPEG/JFIF 语义为 full range (0-255)。TurboJPEG 直接写入输入值，
+    //    若不扩展，纯黑(Y=16)在解码后会显示为深灰。
+    if (!lay.fullRange) {
+        ExpandRangePlane(yP, stride, w, h, /*isLuma=*/true);
+        ExpandRangePlane(uP, uS, uvW, uvH, /*isLuma=*/false);
+        ExpandRangePlane(vP, vS, uvW, uvH, /*isLuma=*/false);
+    }
+
+    // 5. JPEG 压缩
     if (!tj_) tj_ = tjInitCompress();
     if (!tj_) {
         error = "Failed to initialize TurboJPEG compressor";
